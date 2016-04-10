@@ -15,6 +15,7 @@ function divElementHtmlTekst(sporocilo) {
 function procesirajVnosUporabnika(klepetApp, socket) {
   var sporocilo = $('#poslji-sporocilo').val();
   sporocilo = dodajSmeske(sporocilo);
+  var kopijaSporocila = sporocilo;
   var sistemskoSporocilo;
 
   if (sporocilo.charAt(0) == '/') {
@@ -28,8 +29,17 @@ function procesirajVnosUporabnika(klepetApp, socket) {
     $('#sporocila').append(divElementEnostavniTekst(sporocilo));
     $('#sporocila').scrollTop($('#sporocila').prop('scrollHeight'));
   }
-
+  
   $('#poslji-sporocilo').val('');
+  
+  var indeks = 0;
+  var podatki = undefined;
+  while((podatki = slika(kopijaSporocila, indeks)) != undefined){
+    indeks = podatki[1];
+    $('#sporocila').append($('<div></div>').html('<img src="' + podatki[0] + '" style="padding-left:20px; width:200px"/>'));
+  }
+  $('#sporocila').scrollTop($('#sporocila').prop('scrollHeight'));
+
 }
 
 var socket = io.connect();
@@ -76,6 +86,14 @@ $(document).ready(function() {
   socket.on('sporocilo', function (sporocilo) {
     var novElement = divElementEnostavniTekst(sporocilo.besedilo);
     $('#sporocila').append(novElement);
+    
+    var indeks = 0;
+    var podatki = undefined;
+    while((podatki = slika(sporocilo.besedilo, indeks)) != undefined){
+      indeks = podatki[1];
+      $('#sporocila').append($('<div></div>').html('<img src="' + podatki[0] + '" style="padding-left:20px; width:200px"/>'));
+    }
+    $('#sporocila').scrollTop($('#sporocila').prop('scrollHeight'));
   });
   
   socket.on('kanali', function(kanali) {
@@ -116,6 +134,23 @@ $(document).ready(function() {
   
 });
 
+function slika (besedilo, indeks){
+  if(indeks >= besedilo.length) return;
+  var podstring = besedilo.substring(indeks);
+  var zacetek = Math.max(podstring.indexOf("http://") && podstring.indexOf("https://"));
+  if(zacetek == -1) return;
+  var podpodstring = podstring.substring(zacetek);
+  var jpg = podpodstring.indexOf(".jpg");
+  var gif = podpodstring.indexOf(".gif");
+  var png = podpodstring.indexOf(".png");
+  if(Math.max(jpg, gif, png) == -1)return;
+  var konec = Math.max(jpg, gif, png);
+  if(jpg > -1)konec = Math.min(konec, jpg);
+  if(gif > -1)konec = Math.min(konec, gif);
+  if(png > -1)konec = Math.min(konec, png);
+  return [besedilo.substring(indeks+zacetek, indeks + zacetek + konec + 4), indeks + zacetek + konec + 4];
+}
+
 function dodajSmeske(vhodnoBesedilo) {
   var preslikovalnaTabela = {
     ";)": "wink.png",
@@ -131,3 +166,5 @@ function dodajSmeske(vhodnoBesedilo) {
   }
   return vhodnoBesedilo;
 }
+
+
