@@ -15,6 +15,7 @@ function divElementHtmlTekst(sporocilo) {
 function procesirajVnosUporabnika(klepetApp, socket) {
   var sporocilo = $('#poslji-sporocilo').val();
   sporocilo = dodajSmeske(sporocilo);
+  var kopijaSporocila = sporocilo;
   var sistemskoSporocilo;
 
   if (sporocilo.charAt(0) == '/') {
@@ -28,8 +29,18 @@ function procesirajVnosUporabnika(klepetApp, socket) {
     $('#sporocila').append(divElementEnostavniTekst(sporocilo));
     $('#sporocila').scrollTop($('#sporocila').prop('scrollHeight'));
   }
-
+  
   $('#poslji-sporocilo').val('');
+  
+  var indeks = 0;
+  var podatki = undefined;
+  while((podatki = video(kopijaSporocila, indeks)) != undefined){
+    indeks = podatki[1];
+    console.log(podatki[0]);
+    $('#sporocila').append($('<div></div>').html('<iframe src="https://www.youtube.com/embed/' + podatki[0] + '" allowfullscreen style="width:200px; height:150px; margin-left:20px"></iframe>'));
+  }
+  $('#sporocila').scrollTop($('#sporocila').prop('scrollHeight'));
+
 }
 
 var socket = io.connect();
@@ -76,6 +87,14 @@ $(document).ready(function() {
   socket.on('sporocilo', function (sporocilo) {
     var novElement = divElementEnostavniTekst(sporocilo.besedilo);
     $('#sporocila').append(novElement);
+    
+    var indeks = 0;
+    var podatki = undefined;
+    while((podatki = video(sporocilo.besedilo, indeks)) != undefined){
+      indeks = podatki[1];
+      $('#sporocila').append($('<div></div>').html('<iframe src="https://www.youtube.com/embed/' + podatki[0] + '" allowfullscreen style="width:200px; height:150px; margin-left:20px"></iframe>'));
+    }
+    $('#sporocila').scrollTop($('#sporocila').prop('scrollHeight'));
   });
   
   socket.on('kanali', function(kanali) {
@@ -115,6 +134,20 @@ $(document).ready(function() {
   
   
 });
+
+function video (besedilo, indeks){
+  if(indeks >= besedilo.length) return;
+  var podstring = besedilo.substring(indeks);
+  var zacetek = podstring.indexOf("https://www.youtube.com/watch?v=");
+  if(zacetek == -1) return;
+  var podpodstring = podstring.substring(zacetek + "https://www.youtube.com/watch?v=".length);
+  var presledek = podpodstring.indexOf(" ");
+  if(presledek == -1)
+    return [podpodstring, indeks + 30];
+  else
+    return [podpodstring.substring(0, presledek), indeks + zacetek + 30];
+}
+
 
 function dodajSmeske(vhodnoBesedilo) {
   var preslikovalnaTabela = {
